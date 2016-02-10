@@ -8,9 +8,11 @@
 
 import UIKit
 
-class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
 
     var businesses: [Business]!
+    
+    var searchBusiness: [Business]!
     
     @IBOutlet weak var tableView: UITableView!
     
@@ -21,6 +23,7 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
         tableView.dataSource = self
         
         let searchBar = UISearchBar()
+        searchBar.delegate = self
         searchBar.sizeToFit()
         navigationItem.titleView = searchBar
         
@@ -30,6 +33,7 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
 
         Business.searchWithTerm("Thai", completion: { (businesses: [Business]!, error: NSError!) -> Void in
             self.businesses = businesses
+            self.searchBusiness = businesses
             self.tableView.reloadData()
         
             for business in businesses {
@@ -49,6 +53,24 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
         }
 */
     }
+    
+    func searchBar(searchBar: UISearchBar, textDidChange searchText: String){
+        if searchText.isEmpty{
+            searchBusiness = businesses
+        }
+        else{
+            searchBusiness = businesses!.filter({(dataItem: Business) -> Bool in
+                if let restaurant = dataItem.name{
+                    if restaurant.rangeOfString(searchText, options: .CaseInsensitiveSearch) != nil{
+                        return true
+                    }
+                }
+                return false
+            } )
+            
+        }
+        tableView.reloadData()
+    }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -56,8 +78,8 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     }
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if businesses != nil{
-            return businesses.count;
+        if searchBusiness != nil{
+            return searchBusiness.count;
         }
         else {
             return 0
@@ -66,7 +88,7 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     
     func tableView(tableView:UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell{
         let cell = tableView.dequeueReusableCellWithIdentifier("BusinessCell", forIndexPath: indexPath) as! BusinessCell
-        cell.business = businesses[indexPath.row]
+        cell.business = searchBusiness[indexPath.row]
         return cell
     }
     /*
