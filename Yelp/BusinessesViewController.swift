@@ -8,11 +8,17 @@
 
 import UIKit
 
-class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
+class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UIScrollViewDelegate {
 
     var businesses: [Business]!
     
     var searchBusiness: [Business]!
+    
+    var isMoreDataLoading = false
+    
+    var offset = 20.0 as CGFloat
+    
+    var count = 0
     
     @IBOutlet weak var tableView: UITableView!
     
@@ -27,11 +33,13 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
         searchBar.sizeToFit()
         navigationItem.titleView = searchBar
         
+        
+        
         //the rowheight and estimatedrowheight have to be used in conjuction to each other. this is after setting constraints on the image.
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 120
 
-        Business.searchWithTerm("Thai", completion: { (businesses: [Business]!, error: NSError!) -> Void in
+        Business.searchWithTerm("Thai", offset: offset, completion: { (businesses: [Business]!, error: NSError!) -> Void in
             self.businesses = businesses
             self.searchBusiness = businesses
             self.tableView.reloadData()
@@ -52,6 +60,36 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
             }
         }
 */
+    }
+    
+    func scrollViewDidScroll(scrollView: UIScrollView) {
+        if (!isMoreDataLoading){
+            
+            //calculate when there's one screen of data left
+            let scrollViewContentHeight = tableView.contentSize.height
+            let scrollOffsetThreshold = scrollViewContentHeight - tableView.bounds.size.height
+            
+            // When the user has scrolled past the threshold, start requesting
+            if(scrollView.contentOffset.y > scrollOffsetThreshold && tableView.dragging) {
+             isMoreDataLoading = true
+                offset += 20
+                Business.searchWithTerm("Thai", offset: offset, completion: { (businesses: [Business]!, error: NSError!) -> Void in
+                    if error == nil {
+                        print("new one\n")
+                        self.count++
+                        print(self.count)
+                        self.businesses.appendContentsOf(businesses)
+                        self.searchBusiness = businesses
+                        self.tableView.reloadData()
+                        self.isMoreDataLoading = false
+                    }
+                })
+                
+                // ... Code to load more results ...
+            }
+
+            
+        }
     }
     
     func searchBar(searchBar: UISearchBar, textDidChange searchText: String){

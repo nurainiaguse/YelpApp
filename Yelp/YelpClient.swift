@@ -51,15 +51,16 @@ class YelpClient: BDBOAuth1RequestOperationManager {
         self.requestSerializer.saveAccessToken(token)
     }
     
-    func searchWithTerm(term: String, completion: ([Business]!, NSError!) -> Void) -> AFHTTPRequestOperation {
-        return searchWithTerm(term, sort: nil, categories: nil, deals: nil, completion: completion)
+    func searchWithTerm(term: String, offset: CGFloat, completion: ([Business]!, NSError!) -> Void) -> AFHTTPRequestOperation {
+        return searchWithTerm(term, sort: nil, offset: offset, categories: nil, deals: nil, completion: completion)
     }
     
-    func searchWithTerm(term: String, sort: YelpSortMode?, categories: [String]?, deals: Bool?, completion: ([Business]!, NSError!) -> Void) -> AFHTTPRequestOperation {
+    func searchWithTerm(term: String, sort: YelpSortMode?,
+        offset: CGFloat, categories: [String]?, deals: Bool?, completion: ([Business]!, NSError!) -> Void) -> AFHTTPRequestOperation {
         // For additional parameters, see http://www.yelp.com/developers/documentation/v2/search_api
 
         // Default the location to San Francisco
-        var parameters: [String : AnyObject] = ["term": term, "ll": "37.785771,-122.406165"]
+        var parameters: [String : AnyObject] = ["term": term, "ll": "37.785771,-122.406165", "offset": offset]
 
         if sort != nil {
             parameters["sort"] = sort!.rawValue
@@ -68,6 +69,7 @@ class YelpClient: BDBOAuth1RequestOperationManager {
         if categories != nil && categories!.count > 0 {
             parameters["category_filter"] = (categories!).joinWithSeparator(",")
         }
+        
         
         if deals != nil {
             parameters["deals_filter"] = deals!
