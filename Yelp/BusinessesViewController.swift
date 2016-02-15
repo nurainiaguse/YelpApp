@@ -18,7 +18,7 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     
     var offset = 20.0 as CGFloat
     
-    var count = 0
+    var loadingMoreView:InfiniteScrollActivityView?
     
     @IBOutlet weak var tableView: UITableView!
     
@@ -33,6 +33,15 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
         searchBar.sizeToFit()
         navigationItem.titleView = searchBar
         
+        // Set up Infinite Scroll loading indicator
+        let frame = CGRectMake(0, tableView.contentSize.height, tableView.bounds.size.width, InfiniteScrollActivityView.defaultHeight)
+        loadingMoreView = InfiniteScrollActivityView(frame: frame)
+        loadingMoreView!.hidden = true
+        tableView.addSubview(loadingMoreView!)
+        
+        var insets = tableView.contentInset;
+        insets.bottom += InfiniteScrollActivityView.defaultHeight;
+        tableView.contentInset = insets
         
         
         //the rowheight and estimatedrowheight have to be used in conjuction to each other. this is after setting constraints on the image.
@@ -71,21 +80,26 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
             
             // When the user has scrolled past the threshold, start requesting
             if(scrollView.contentOffset.y > scrollOffsetThreshold && tableView.dragging) {
-             isMoreDataLoading = true
+                isMoreDataLoading = true
+                
+                // Update position of loadingMoreView, and start loading indicator
+                let frame = CGRectMake(0, tableView.contentSize.height, tableView.bounds.size.width, InfiniteScrollActivityView.defaultHeight)
+                loadingMoreView?.frame = frame
+                loadingMoreView!.startAnimating()
+                
+                // get more data and append to existing dict
                 offset += 20
                 Business.searchWithTerm("Thai", offset: offset, completion: { (businesses: [Business]!, error: NSError!) -> Void in
                     if error == nil {
-                        print("new one\n")
-                        self.count++
-                        print(self.count)
                         self.businesses.appendContentsOf(businesses)
-                        self.searchBusiness = businesses
+                        self.searchBusiness = self.businesses
+                        // Stop the loading indicator
+                        self.loadingMoreView!.stopAnimating()
                         self.tableView.reloadData()
                         self.isMoreDataLoading = false
                     }
                 })
-                
-                // ... Code to load more results ...
+
             }
 
             
